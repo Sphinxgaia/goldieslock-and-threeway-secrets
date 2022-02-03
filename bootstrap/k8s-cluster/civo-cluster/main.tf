@@ -13,7 +13,7 @@ data "civo_size" "xsmall" {
 
 # Create a firewall
 resource "civo_firewall" "my-firewall" {
-    name = "my-firewall"
+    name = "${var.story_name}-firewall"
 }
 
 # Create a firewall rule
