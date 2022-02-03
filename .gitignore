@@ -1,0 +1,11 @@
+.terraform*
+terraform.tfstate*
+*vault-datas*
+*creds.auto.tfvars
+*kubeconfig
+*tf.init
+.DS_Store
+Library/
+*.cast
+.kube/
+.cache

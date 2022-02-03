@@ -1,0 +1,27 @@
+html,
+.container {
+height: 100%;
+}
+body {
+  height: 100%;
+  background-image: url("https://www.fgtech.fr/wp-content/uploads/2020/11/qui-sommes-nous-g.png");
+}
+div {
+  text-align: center;
+}
+main{
+  text-align: center;
+}
+
+img {
+  width: 70%;
+  margin: auto;
+  display: block;
+  min-width:300px;
+}
+
+body {
+  display: -ms-flexbox;
+  display: flex;
+  color: #000;
+}

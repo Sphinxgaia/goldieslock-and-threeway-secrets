@@ -1,0 +1,106 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: goldieslocks-main
+  labels:
+    app: goldieslocks
+spec:
+  selector:
+    matchLabels:
+      component: goldieslocks-main
+  template:
+    metadata:
+      labels:
+        component: goldieslocks-main
+    spec:
+      terminationGracePeriodSeconds: 5
+      containers:
+      - name: server
+        image: ghcr.io/sphinxgaia/goldie-main:goldieslocks
+        imagePullPolicy: Always
+        resources: {}
+        ports:
+        - containerPort: 9000
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: goldieslocks-main
+  labels:
+    app: goldieslocks
+spec:
+  selector:
+    component: goldieslocks-main
+  ports:
+  - name: http
+    port: 9000
+    protocol: TCP
+    targetPort: 9000
+    nodePort: 30010
+  # type: ClusterIP
+  # change to NodePort if no LoadBalancer controller is available
+  type: NodePort
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: goldieslocks-body
+  labels:
+    app: goldieslocks
+spec:
+  selector:
+    matchLabels:
+      component: goldieslocks-body
+  template:
+    metadata:
+      labels:
+        component: goldieslocks-body
+    spec:
+      serviceAccountName: goldieslocks
+      terminationGracePeriodSeconds: 5
+      containers:
+      - name: server
+        # image: busybox
+        # command: 
+        # - /bin/sh
+        # args:
+        # - -c
+        # - |
+        #   sleep 15000
+        image: ghcr.io/sphinxgaia/goldie-body:goldieslocks
+        imagePullPolicy: Always
+        resources: {}
+        ports:
+          - containerPort: 9000
+        env:
+          - name: PORT
+            value: "9000"
+          - name: VAULT_ADDR
+            value: 'http://vault-master.vault-master.svc:8200'
+          - name: JWT_PATH
+            value: '/var/run/secrets/kubernetes.io/serviceaccount/token'
+          - name: SA
+            value: bigbear
+          - name: SECRET_PATH
+            value: bigbear/data/soup
+          - name: SECRET_KEY
+            value: gustative
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: goldieslocks-body
+  labels:
+    app: goldieslocks
+spec:
+  selector:
+    component: goldieslocks-body
+  ports:
+    - name: http
+      port: 9007
+      protocol: TCP
+      targetPort: 9000
+  type: ClusterIP

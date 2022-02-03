@@ -1,0 +1,117 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: goldieslocks-main
+  labels:
+    app: goldieslocks
+spec:
+  selector:
+    matchLabels:
+      component: goldieslocks-main
+  template:
+    metadata:
+      labels:
+        component: goldieslocks-main
+    spec:
+      terminationGracePeriodSeconds: 5
+      containers:
+      - name: server
+        image: ghcr.io/sphinxgaia/goldie-main:goldieslocks
+        imagePullPolicy: Always
+        resources: {}
+        ports:
+        - containerPort: 9000
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: goldieslocks-main
+  labels:
+    app: goldieslocks
+spec:
+  selector:
+    component: goldieslocks-main
+  ports:
+  - name: http
+    port: 9000
+    protocol: TCP
+    targetPort: 9000
+    nodePort: 30031
+  # type: ClusterIP
+  # change to NodePort if no LoadBalancer controller is available
+  type: NodePort
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: goldieslocks-body
+  labels:
+    app: goldieslocks
+spec:
+  selector:
+    matchLabels:
+      component: goldieslocks-body
+  template:
+    metadata:
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/agent-inject-status: "update"
+        vault.hashicorp.com/auth-path: auth/midbear
+        vault.hashicorp.com/role: midbear        
+        vault.hashicorp.com/agent-inject-secret-version: 'midbear/data/bed'
+        vault.hashicorp.com/agent-inject-template-version: '{{- with secret "midbear/data/bed" -}}export VERSION={{ .Data.data.qualite }}{{- end }}'
+        # vault.hashicorp.com/secret-volume-path-version: "/secret"
+      labels:
+        component: goldieslocks-body
+    spec:
+      serviceAccountName: goldieslocks
+      terminationGracePeriodSeconds: 5
+      containers:
+      - name: server
+        # image: busybox
+        # command: 
+        # - /bin/sh
+        # args:
+        # - -c
+        # - |
+        #   sleep 15000
+        image: ghcr.io/sphinxgaia/goldie-body-alpine:goldieslocks
+        command: 
+        - /bin/sh
+        args:
+        - -c
+        - |
+          source /secret/version
+          /goldieserver
+        imagePullPolicy: Always
+        resources: {}
+        ports:
+          - containerPort: 9000
+        env:
+          - name: PORT
+            value: "9000"
+        volumeMounts:
+            - mountPath: /cache
+              name: cache-volume
+      
+      volumes:
+      - name: cache-volume
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: goldieslocks-body
+  labels:
+    app: goldieslocks
+spec:
+  selector:
+    component: goldieslocks-body
+  ports:
+    - name: http
+      port: 9007
+      protocol: TCP
+      targetPort: 9000
+  type: ClusterIP
